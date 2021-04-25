@@ -29,7 +29,6 @@ func _process(delta):
 
 func update_shake(delta):
 	var amount = pow(trauma, trauma_power)
-	var time = OS.get_splash_tick_msec()
 	noise_y += 1
 	rotation = max_roll * amount * noise.get_noise_2d(noise.seed, noise_y)
 	offset.x = max_offset.x * amount * noise.get_noise_2d(noise.seed*2, noise_y)
