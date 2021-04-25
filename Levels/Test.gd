@@ -2,35 +2,43 @@ extends Node2D
 
 onready var player = $Player
 onready var tilemap = $TileMap
+onready var tile_highlight = $SelectedTileHighlight
+onready var camera = $Camera2D
 
 func _ready():
 	pass
 
-func _input(event):
-	if event is InputEventMouseButton:
-		if event.pressed:
-			var local_position = tilemap.to_local(player.position)
-			var player_cell = tilemap.world_to_map(local_position)
-#			print("Player world position: ", player.position)
-#			print("Player tilemap coordinates: ", player_cell)
-			# Get the tile in the relative cardinal direction from the player.
-#			print("Mouse click world position: ", event.position)
-			var mouse_player_delta = event.position - player.position
-			if abs(mouse_player_delta.x) > abs(mouse_player_delta.y):
-				if mouse_player_delta.x > 0:
-					# Dig right
-					tilemap.damage_cell(player_cell.x + 1, player_cell.y)
-#					tilemap.set_cell(player_cell.x + 1, player_cell.y, TileMap.INVALID_CELL)
-				else:
-					# Dig left
-					tilemap.damage_cell(player_cell.x - 1, player_cell.y)
-#					tilemap.set_cell(player_cell.x - 1, player_cell.y, TileMap.INVALID_CELL)
-			else:
-				if mouse_player_delta.y > 0:
-					# Dig down
-					tilemap.damage_cell(player_cell.x, player_cell.y + 1)
-#					tilemap.set_cell(player_cell.x, player_cell.y + 1, TileMap.INVALID_CELL)
+func _process(delta):
+	var highlighted_cell = get_highlighted_cell(get_global_mouse_position())
+	if highlighted_cell != null:
+		var local_position = tilemap.map_to_world(highlighted_cell)
+		var global_position = tilemap.to_global(local_position)
+		tile_highlight.position = global_position
+		tile_highlight.visible = true
+	else:
+		tile_highlight.visible = false
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta):
-#	pass
+	if Input.is_action_just_pressed("dig"):
+		var cell = get_highlighted_cell(get_global_mouse_position())
+		if cell != null:
+			tilemap.damage_cell(cell.x, cell.y)
+
+func get_highlighted_cell(mouse_position):
+	var local_position = tilemap.to_local(player.position)
+	var player_cell = tilemap.world_to_map(local_position)
+	var mouse_player_delta = mouse_position - player.position
+	if abs(mouse_player_delta.x) > abs(mouse_player_delta.y):
+		if mouse_player_delta.x > 0:
+			if tilemap.get_cell(player_cell.x + 1, player_cell.y) != TileMap.INVALID_CELL:
+				return Vector2(player_cell.x + 1, player_cell.y)
+		else:
+			if tilemap.get_cell(player_cell.x - 1, player_cell.y) != TileMap.INVALID_CELL:
+				return Vector2(player_cell.x - 1, player_cell.y)
+	else:
+		if mouse_player_delta.y > 0:
+			if tilemap.get_cell(player_cell.x, player_cell.y + 1) != TileMap.INVALID_CELL:
+				return Vector2(player_cell.x, player_cell.y + 1)
+	return null
+
+func _on_TileMap_block_was_hit():
+	camera.start_shake(0.4)

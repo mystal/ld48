@@ -5,6 +5,8 @@ const ClayStats = preload("res://Blocks/ClayStats.tres")
 const GemStats = preload("res://Blocks/GemStats.tres")
 const StoneStats = preload("res://Blocks/StoneStats.tres")
 
+signal block_was_hit()
+
 var block_healths = Dictionary()
 
 func _ready():
@@ -22,6 +24,8 @@ func damage_cell(cell_x, cell_y):
 	else:
 		set_cell(cell_x, cell_y, TileMap.INVALID_CELL)
 		block_healths.erase(cell)
+
+	emit_signal("block_was_hit")
 
 func get_block_stats(cell_x, cell_y):
 	var tile_id = get_cell(cell_x, cell_y)
